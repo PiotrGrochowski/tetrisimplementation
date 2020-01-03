@@ -9,12 +9,21 @@
 #include <ratio>   // std::ratio
 #include <thread>  // std::this_thread::sleep_until
 
-template<std::intmax_t FPS>
+//..............................................................................
+
+/* This part of code credits to Ted Lyngmo from stack overflow:
+https://stackoverflow.com/a/59442868/5483294
+License: "Anything published on Stackoverflow better be totally free and
+everything I've ever written definitely is."
+vvvvv */
+
+template<uint64_t FPS>
 class frame_rater {
 public:
-    frame_rater() :                 // initialize the object keeping the pace
-        time_between_frames{ 1 },   // std::ratio<1, FPS> seconds
-        tp{ std::chrono::steady_clock::now() }
+    frame_rater() :
+        // initialize the object keeping the pace - casting needed
+        tp{std::chrono::time_point_cast<decltype(time_between_frames)>(
+            std::chrono::steady_clock::now())}
     {}
 
     void sleep() {
@@ -27,11 +36,23 @@ public:
 
 private:
     // a duration with a length of 1/FPS seconds
-    std::chrono::duration<long double, std::ratio<1, FPS>> time_between_frames;
+    static std::chrono::duration<uint64_t, std::ratio<1, FPS>>
+        time_between_frames;
 
     // the time point we'll add to in every loop
     std::chrono::time_point<std::chrono::steady_clock, decltype(time_between_frames)> tp;
 };
+
+/* ^^^^^ This part of code credits to Ted Lyngmo from stack overflow:
+https://stackoverflow.com/a/59442868/5483294
+License: "Anything published on Stackoverflow better be totally free and
+everything I've ever written definitely is."
+*/
+
+template<uint64_t FPS>
+std::chrono::duration<uint64_t, std::ratio<1, FPS>>
+    frame_rater<FPS>::time_between_frames{1};
+
 
 int main() {
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -45,49 +66,33 @@ int main() {
     for (int i=0; i<19; i++){
         screen[i].Char.AsciiChar="TETRIS COLOR PICKER"[i];
     }
-    for (int i=0; i<23; i++){
-        screen[i+480].Char.AsciiChar="Select background color"[i];
+    for (int i=0; i<10; i++){
+        screen[i+162].Char.AsciiChar="Foreground"[i];
     }
-    for (int i=0; i<64; i++){
-        screen[i+560].Char.AsciiChar=219;
+    for (int i=0; i<23; i++){
+        screen[i+560].Char.AsciiChar="Select background color"[i];
+    }
+    for (int i=0; i<32; i++){
         screen[i+640].Char.AsciiChar=219;
         screen[i+960].Char.AsciiChar=219;
-        screen[i+1040].Char.AsciiChar=219;
     }
-    for (int i=0; i<64; i++){
-        screen[i+560].Attributes=i/4;
-        screen[i+640].Attributes=i/4;
-        screen[i+960].Attributes=i/4;
-        screen[i+1040].Attributes=i/4;
+    for (int i=0; i<32; i++){
+        screen[i+640].Attributes=i/2;
+        screen[i+960].Attributes=i/2;
     }
     for (int i=0; i<23; i++){
         screen[i+880].Char.AsciiChar="Select foreground color"[i];
     }
     for (int i=0; i<12; i++){
-        screen[i+1280].Char.AsciiChar="Select shade"[i];
+        screen[i+1200].Char.AsciiChar="Select shade"[i];
     }
-    for (int i=0; i<4; i++){
-        screen[i+1360].Char.AsciiChar=32;
-        screen[i+1440].Char.AsciiChar=32;
-    }
-    for (int i=4; i<8; i++){
-        screen[i+1360].Char.AsciiChar=176;
-        screen[i+1440].Char.AsciiChar=176;
-    }
-    for (int i=8; i<12; i++){
-        screen[i+1360].Char.AsciiChar=177;
-        screen[i+1440].Char.AsciiChar=177;
-    }
-    for (int i=12; i<16; i++){
-        screen[i+1360].Char.AsciiChar=178;
-        screen[i+1440].Char.AsciiChar=178;
-    }
-    for (int i=16; i<20; i++){
-        screen[i+1360].Char.AsciiChar=219;
-        screen[i+1440].Char.AsciiChar=219;
+    char grays[5];
+    grays[0]=32; grays[1]=176; grays[2]=177; grays[3]=178; grays[4]=219;
+    for (int i=0; i<10; i++){
+        screen[i+1280].Char.AsciiChar=grays[i/2];
     }
     for (int i=0; i<80; i++){
-        screen[i+320].Attributes=31;
+        screen[i+400].Attributes=31;
     }
     uint8_t row = 0;
     uint8_t flag = 0;
@@ -101,25 +106,21 @@ int main() {
         pieces[i].Char.AsciiChar=177;
         pieces[i].Attributes = 7;
     }
-    for (int i=0; i<4; i++){
-        screen[320+i+x1*4].Char.AsciiChar=94;
+    for (int i=0; i<2; i++){
+        screen[400+i+x1*2].Char.AsciiChar=94;
     }
-    for (int i=0; i<4; i++){
-        screen[720+i+x2[x1]*4].Char.AsciiChar=94;
+    for (int i=0; i<2; i++){
+        screen[720+i+x2[x1]*2].Char.AsciiChar=94;
     }
-    for (int i=0; i<4; i++){
-        screen[1120+i+x3[x1]*4].Char.AsciiChar=94;
+    for (int i=0; i<2; i++){
+        screen[1040+i+x3[x1]*2].Char.AsciiChar=94;
     }
-    for (int i=0; i<4; i++){
-        screen[1520+i+x4[x1]*4].Char.AsciiChar=94;
+    for (int i=0; i<2; i++){
+        screen[1360+i+x4[x1]*2].Char.AsciiChar=94;
     }
-    char grays[5];
-    grays[0]=32; grays[1]=176; grays[2]=177; grays[3]=178; grays[4]=219;
-    for (int i=0; i<28; i++){
-        screen[i+160].Attributes=x2[i/4]*16+x3[i/4];
-        screen[i+240].Attributes=x2[i/4]*16+x3[i/4];
-        screen[i+160].Char.AsciiChar=grays[x4[i/4]];
-        screen[i+240].Char.AsciiChar=grays[x4[i/4]];
+    for (int i=0; i<14; i++){
+        screen[i+320].Attributes=x2[i/2]*16+x3[i/2];
+        screen[i+320].Char.AsciiChar=grays[x4[i/2]];
     }
     SMALL_RECT testscreenrect;
     testscreenrect.Left = 0;
@@ -142,11 +143,11 @@ int main() {
             if (keys[0] == 1){
                 if (o < 4 && o != 0){
                     for (int i=0; i<80; i++){
-                        screen[i+320+(o*400)].Attributes=7;
+                        screen[i+400+(o*320)].Attributes=7;
                     }
                     o--;
                     for (int i=0; i<80; i++){
-                        screen[i+320+(o*400)].Attributes=31;
+                        screen[i+400+(o*320)].Attributes=31;
                     }
                 }
             }
@@ -156,11 +157,11 @@ int main() {
             if (keys[1] == 1){
                 if (o < 3){
                     for (int i=0; i<80; i++){
-                        screen[i+320+(o*400)].Attributes=7;
+                        screen[i+400+(o*320)].Attributes=7;
                     }
                     o++;
                     for (int i=0; i<80; i++){
-                        screen[i+320+(o*400)].Attributes=31;
+                        screen[i+400+(o*320)].Attributes=31;
                     }
                 }
             }
@@ -170,87 +171,81 @@ int main() {
             if (keys[2] == 1){
                 if (o == 0){
                     if (x1 < 7 && x1 != 0){
-                        for (int i=0; i<4; i++){
-                            screen[320+i+x1*4].Char.AsciiChar=32;
+                        for (int i=0; i<2; i++){
+                            screen[400+i+x1*2].Char.AsciiChar=32;
                         }
-                        for (int i=0; i<4; i++){
-                            screen[720+i+x2[x1]*4].Char.AsciiChar=32;
+                        for (int i=0; i<2; i++){
+                            screen[720+i+x2[x1]*2].Char.AsciiChar=32;
                         }
-                        for (int i=0; i<4; i++){
-                            screen[1120+i+x3[x1]*4].Char.AsciiChar=32;
+                        for (int i=0; i<2; i++){
+                            screen[1040+i+x3[x1]*2].Char.AsciiChar=32;
                         }
-                        for (int i=0; i<4; i++){
-                            screen[1520+i+x4[x1]*4].Char.AsciiChar=32;
+                        for (int i=0; i<2; i++){
+                            screen[1360+i+x4[x1]*2].Char.AsciiChar=32;
                         }
                         x1--;
-                        for (int i=0; i<4; i++){
-                            screen[320+i+x1*4].Char.AsciiChar=94;
+                        for (int i=0; i<2; i++){
+                            screen[400+i+x1*2].Char.AsciiChar=94;
                         }
-                        for (int i=0; i<4; i++){
-                            screen[720+i+x2[x1]*4].Char.AsciiChar=94;
+                        for (int i=0; i<2; i++){
+                            screen[720+i+x2[x1]*2].Char.AsciiChar=94;
                         }
-                        for (int i=0; i<4; i++){
-                            screen[1120+i+x3[x1]*4].Char.AsciiChar=94;
+                        for (int i=0; i<2; i++){
+                            screen[1040+i+x3[x1]*2].Char.AsciiChar=94;
                         }
-                        for (int i=0; i<4; i++){
-                            screen[1520+i+x4[x1]*4].Char.AsciiChar=94;
+                        for (int i=0; i<2; i++){
+                            screen[1360+i+x4[x1]*2].Char.AsciiChar=94;
                         }
-                        for (int i=0; i<20; i++){
-                            screen[i+1360].Attributes=x2[x1]*16+x3[x1];
-                            screen[i+1440].Attributes=x2[x1]*16+x3[x1];
+                        for (int i=0; i<10; i++){
+                            screen[i+1280].Attributes=x2[x1]*16+x3[x1];
                         }
                     }
                 }
                 if (o == 1){
                     if (x2[x1] < 16 && x2[x1] != 0){
-                        for (int i=0; i<4; i++){
-                            screen[720+i+x2[x1]*4].Char.AsciiChar=32;
+                        for (int i=0; i<2; i++){
+                            screen[720+i+x2[x1]*2].Char.AsciiChar=32;
                         }
                         x2[x1]--;
-                        for (int i=0; i<4; i++){
-                            screen[720+i+x2[x1]*4].Char.AsciiChar=94;
+                        for (int i=0; i<2; i++){
+                            screen[720+i+x2[x1]*2].Char.AsciiChar=94;
                         }
-                        for (int i=0; i<4; i++){
-                            screen[i+160+x1*4].Attributes=x2[x1]*16+x3[x1];
-                            screen[i+240+x1*4].Attributes=x2[x1]*16+x3[x1];
+                        for (int i=0; i<2; i++){
+                            screen[i+320+x1*2].Attributes=x2[x1]*16+x3[x1];
                         }
-                        for (int i=0; i<20; i++){
-                            screen[i+1360].Attributes=x2[x1]*16+x3[x1];
-                            screen[i+1440].Attributes=x2[x1]*16+x3[x1];
+                        for (int i=0; i<10; i++){
+                            screen[i+1280].Attributes=x2[x1]*16+x3[x1];
                         }
                     }
                 }
                 if (o == 2){
                     if (x3[x1] < 16 && x3[x1] != 0){
-                        for (int i=0; i<4; i++){
-                            screen[1120+i+x3[x1]*4].Char.AsciiChar=32;
+                        for (int i=0; i<2; i++){
+                            screen[1040+i+x3[x1]*2].Char.AsciiChar=32;
                         }
                         x3[x1]--;
-                        for (int i=0; i<4; i++){
-                            screen[1120+i+x3[x1]*4].Char.AsciiChar=94;
+                        for (int i=0; i<2; i++){
+                            screen[1040+i+x3[x1]*2].Char.AsciiChar=94;
                         }
-                        for (int i=0; i<4; i++){
-                            screen[i+160+x1*4].Attributes=x2[x1]*16+x3[x1];
-                            screen[i+240+x1*4].Attributes=x2[x1]*16+x3[x1];
+                        for (int i=0; i<2; i++){
+                            screen[i+320+x1*2].Attributes=x2[x1]*16+x3[x1];
                         }
-                        for (int i=0; i<20; i++){
-                            screen[i+1360].Attributes=x2[x1]*16+x3[x1];
-                            screen[i+1440].Attributes=x2[x1]*16+x3[x1];
+                        for (int i=0; i<10; i++){
+                            screen[i+1280].Attributes=x2[x1]*16+x3[x1];
                         }
                     }
                 }
                 if (o == 3){
                     if (x4[x1] < 5 && x4[x1] != 0){
-                        for (int i=0; i<4; i++){
-                            screen[1520+i+x4[x1]*4].Char.AsciiChar=32;
+                        for (int i=0; i<2; i++){
+                            screen[1360+i+x4[x1]*2].Char.AsciiChar=32;
                         }
                         x4[x1]--;
-                        for (int i=0; i<4; i++){
-                            screen[1520+i+x4[x1]*4].Char.AsciiChar=94;
+                        for (int i=0; i<2; i++){
+                            screen[1360+i+x4[x1]*2].Char.AsciiChar=94;
                         }
-                        for (int i=0; i<4; i++){
-                            screen[i+160+x1*4].Char.AsciiChar=grays[x4[x1]];
-                            screen[i+240+x1*4].Char.AsciiChar=grays[x4[x1]];
+                        for (int i=0; i<2; i++){
+                            screen[i+320+x1*2].Char.AsciiChar=grays[x4[x1]];
                         }
                     }
                 }
@@ -261,87 +256,81 @@ int main() {
             if (keys[3] == 1){
                 if (o == 0){
                     if (x1 < 6){
-                        for (int i=0; i<4; i++){
-                            screen[320+i+x1*4].Char.AsciiChar=32;
+                        for (int i=0; i<2; i++){
+                            screen[400+i+x1*2].Char.AsciiChar=32;
                         }
-                        for (int i=0; i<4; i++){
-                            screen[720+i+x2[x1]*4].Char.AsciiChar=32;
+                        for (int i=0; i<2; i++){
+                            screen[720+i+x2[x1]*2].Char.AsciiChar=32;
                         }
-                        for (int i=0; i<4; i++){
-                            screen[1120+i+x3[x1]*4].Char.AsciiChar=32;
+                        for (int i=0; i<2; i++){
+                            screen[1040+i+x3[x1]*2].Char.AsciiChar=32;
                         }
-                        for (int i=0; i<4; i++){
-                            screen[1520+i+x4[x1]*4].Char.AsciiChar=32;
+                        for (int i=0; i<2; i++){
+                            screen[1360+i+x4[x1]*2].Char.AsciiChar=32;
                         }
                         x1++;
-                        for (int i=0; i<4; i++){
-                            screen[320+i+x1*4].Char.AsciiChar=94;
+                        for (int i=0; i<2; i++){
+                            screen[400+i+x1*2].Char.AsciiChar=94;
                         }
-                        for (int i=0; i<4; i++){
-                            screen[720+i+x2[x1]*4].Char.AsciiChar=94;
+                        for (int i=0; i<2; i++){
+                            screen[720+i+x2[x1]*2].Char.AsciiChar=94;
                         }
-                        for (int i=0; i<4; i++){
-                            screen[1120+i+x3[x1]*4].Char.AsciiChar=94;
+                        for (int i=0; i<2; i++){
+                            screen[1040+i+x3[x1]*2].Char.AsciiChar=94;
                         }
-                        for (int i=0; i<4; i++){
-                            screen[1520+i+x4[x1]*4].Char.AsciiChar=94;
+                        for (int i=0; i<2; i++){
+                            screen[1360+i+x4[x1]*2].Char.AsciiChar=94;
                         }
-                        for (int i=0; i<20; i++){
-                            screen[i+1360].Attributes=x2[x1]*16+x3[x1];
-                            screen[i+1440].Attributes=x2[x1]*16+x3[x1];
+                        for (int i=0; i<10; i++){
+                            screen[i+1280].Attributes=x2[x1]*16+x3[x1];
                         }
                     }
                 }
                 if (o == 1){
                     if (x2[x1] < 15){
-                        for (int i=0; i<4; i++){
-                            screen[720+i+x2[x1]*4].Char.AsciiChar=32;
+                        for (int i=0; i<2; i++){
+                            screen[720+i+x2[x1]*2].Char.AsciiChar=32;
                         }
                         x2[x1]++;
-                        for (int i=0; i<4; i++){
-                            screen[720+i+x2[x1]*4].Char.AsciiChar=94;
+                        for (int i=0; i<2; i++){
+                            screen[720+i+x2[x1]*2].Char.AsciiChar=94;
                         }
-                        for (int i=0; i<4; i++){
-                            screen[i+160+x1*4].Attributes=x2[x1]*16+x3[x1];
-                            screen[i+240+x1*4].Attributes=x2[x1]*16+x3[x1];
+                        for (int i=0; i<2; i++){
+                            screen[i+320+x1*2].Attributes=x2[x1]*16+x3[x1];
                         }
-                        for (int i=0; i<20; i++){
-                            screen[i+1360].Attributes=x2[x1]*16+x3[x1];
-                            screen[i+1440].Attributes=x2[x1]*16+x3[x1];
+                        for (int i=0; i<10; i++){
+                            screen[i+1280].Attributes=x2[x1]*16+x3[x1];
                         }
                     }
                 }
                 if (o == 2){
                     if (x3[x1] < 15){
-                        for (int i=0; i<4; i++){
-                            screen[1120+i+x3[x1]*4].Char.AsciiChar=32;
+                        for (int i=0; i<2; i++){
+                            screen[1040+i+x3[x1]*2].Char.AsciiChar=32;
                         }
                         x3[x1]++;
-                        for (int i=0; i<4; i++){
-                            screen[1120+i+x3[x1]*4].Char.AsciiChar=94;
+                        for (int i=0; i<2; i++){
+                            screen[1040+i+x3[x1]*2].Char.AsciiChar=94;
                         }
-                        for (int i=0; i<4; i++){
-                            screen[i+160+x1*4].Attributes=x2[x1]*16+x3[x1];
-                            screen[i+240+x1*4].Attributes=x2[x1]*16+x3[x1];
+                        for (int i=0; i<2; i++){
+                            screen[i+320+x1*2].Attributes=x2[x1]*16+x3[x1];
                         }
-                        for (int i=0; i<20; i++){
-                            screen[i+1360].Attributes=x2[x1]*16+x3[x1];
-                            screen[i+1440].Attributes=x2[x1]*16+x3[x1];
+                        for (int i=0; i<10; i++){
+                            screen[i+1280].Attributes=x2[x1]*16+x3[x1];
                         }
                     }
                 }
                 if (o == 3){
                     if (x4[x1] < 4){
-                        for (int i=0; i<4; i++){
-                            screen[1520+i+x4[x1]*4].Char.AsciiChar=32;
+                        for (int i=0; i<2; i++){
+                            screen[1360+i+x4[x1]*2].Char.AsciiChar=32;
                         }
                         x4[x1]++;
-                        for (int i=0; i<4; i++){
-                            screen[1520+i+x4[x1]*4].Char.AsciiChar=94;
+                        for (int i=0; i<2; i++){
+                            screen[1360+i+x4[x1]*2].Char.AsciiChar=94;
                         }
-                        for (int i=0; i<4; i++){
-                            screen[i+160+x1*4].Char.AsciiChar=grays[x4[x1]];
-                            screen[i+240+x1*4].Char.AsciiChar=grays[x4[x1]];
+                        for (int i=0; i<2; i++){
+                            screen[i+320+x1*2].Char.AsciiChar=grays[x4[x1]];
                         }
                     }
                 }
