@@ -43,16 +43,15 @@ private:
     std::chrono::time_point<std::chrono::steady_clock, decltype(time_between_frames)> tp;
 };
 
+template<uint64_t FPS>
+std::chrono::duration<uint64_t, std::ratio<1, FPS>>
+    frame_rater<FPS>::time_between_frames{1};
+
 /* ^^^^^ This part of code credits to Ted Lyngmo from stack overflow:
 https://stackoverflow.com/a/59442868/5483294
 License: "Anything published on Stackoverflow better be totally free and
 everything I've ever written definitely is."
 */
-
-template<uint64_t FPS>
-std::chrono::duration<uint64_t, std::ratio<1, FPS>>
-    frame_rater<FPS>::time_between_frames{1};
-
 
 int main() {
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
