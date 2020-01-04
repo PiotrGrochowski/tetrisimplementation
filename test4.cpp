@@ -4,6 +4,7 @@
 #include <sstream>
 #include <iomanip>
 #include <limits>
+#include <fstream>
 #include <cstdint> // use the C++ header
 #include <chrono>  // std::chrono::time_point
 #include <ratio>   // std::ratio
@@ -85,6 +86,9 @@ int main() {
     for (int i=0; i<12; i++){
         screen[i+1200].Char.AsciiChar="Select shade"[i];
     }
+    for (int i=0; i<11; i++){
+        screen[i+1680].Char.AsciiChar="Save & Quit"[i];
+    }
     char grays[5];
     grays[0]=32; grays[1]=176; grays[2]=177; grays[3]=178; grays[4]=219;
     for (int i=0; i<10; i++){
@@ -97,13 +101,31 @@ int main() {
     uint8_t flag = 0;
     uint8_t o = 0;
     uint8_t x1 = 0;
-    uint8_t x2[7] = {0, 0, 0, 0, 0, 0, 0};
-    uint8_t x3[7] = {7, 7, 7, 7, 7, 7, 7};
-    uint8_t x4[7] = {2, 2, 2, 2, 2, 2, 2};
+    uint8_t x2[7] ;
+    uint8_t x3[7] ;
+    uint8_t x4[7] ;
+    std::fstream save;
+    save.open("savefile", std::ios::in|std::ios::binary);
+    save.seekg (0, save.end);
+    uint64_t length = save.tellg();
+    save.seekg (0, save.beg);
+    char load[length];
+    save.read(load,length);
+    save.close();
     CHAR_INFO pieces[7];
     for (int i=0; i<7; i++){
-        pieces[i].Char.AsciiChar=177;
-        pieces[i].Attributes = 7;
+        pieces[i].Char.AsciiChar = uint8_t(load[i*2+1]);
+        pieces[i].Attributes = uint8_t(load[i*2]);
+    }
+    for (int i=0; i<7; i++){
+        x2[i]=pieces[i].Attributes / 16;
+        x3[i]=pieces[i].Attributes % 16;
+        x4[i]=0;
+        for (int q=0; q<5; q++){
+            if (pieces[i].Char.AsciiChar == grays[q]){
+                x4[i]=q;
+            }
+        }
     }
     for (int i=0; i<2; i++){
         screen[400+i+x1*2].Char.AsciiChar=94;
@@ -130,8 +152,9 @@ int main() {
     COORD teststart = {0, 0};
     uint8_t keys[8] = {0, 0, 0, 0, 0, 0, 0, 0};
     WriteConsoleOutput(hConsole, screen, testscreensize, teststart, &testscreenrect);
+    uint8_t run = -1;
         frame_rater<60> fr;
-    while (-1) {
+    while (run) {
         testscreenrect.Left = 0;
         testscreenrect.Top = 0;
         testscreenrect.Right = 79;
@@ -140,7 +163,7 @@ int main() {
         if ((uint16_t(GetAsyncKeyState(38)) / 32768) != keys[0]){
             keys[0] ^= 1;
             if (keys[0] == 1){
-                if (o < 4 && o != 0){
+                if (o < 5 && o != 0){
                     for (int i=0; i<80; i++){
                         screen[i+400+(o*320)].Attributes=7;
                     }
@@ -154,7 +177,7 @@ int main() {
         if ((uint16_t(GetAsyncKeyState(40)) / 32768) != keys[1]){
             keys[1] ^= 1;
             if (keys[1] == 1){
-                if (o < 3){
+                if (o < 4){
                     for (int i=0; i<80; i++){
                         screen[i+400+(o*320)].Attributes=7;
                     }
@@ -332,6 +355,22 @@ int main() {
                             screen[i+320+x1*2].Char.AsciiChar=grays[x4[x1]];
                         }
                     }
+                }
+            }
+        }
+        if ((uint16_t(GetAsyncKeyState(13)) / 32768) != keys[7]){
+            keys[7] ^= 1;
+            if (keys[7] == 1){
+                if (o == 4){
+                    char saving[14];
+                    for (int i = 0; i < 7; i++){
+                        saving[2*i+1] = grays[x4[i]];
+                        saving[2*i] = x2[i]*16+x3[i];
+                    }
+                    save.open("savefile", std::ios::out|std::ios::binary);
+                    save.write(saving, 14);
+                    save.close();
+                    run = 0;
                 }
             }
         }
